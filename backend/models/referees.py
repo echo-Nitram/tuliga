@@ -37,13 +37,31 @@ class Availability(Base):
     referee = relationship("Referee", back_populates="availability")
 
 
-class Match(BaseModel):
-    """Simplified match representation with assigned referee."""
+class Match(Base):
+    """Scheduled match with an assigned referee."""
 
+    __tablename__ = "referee_matches"
+
+    id = Column(Integer, primary_key=True, index=True)
+    home = Column(String, nullable=False)
+    away = Column(String, nullable=False)
+    date = Column(SA_Date, nullable=False)
+    referee_id = Column(Integer, ForeignKey("referees.id", ondelete="SET NULL"))
+
+    referee = relationship("Referee")
+
+
+class MatchSchema(BaseModel):
+    """Pydantic schema for serialising scheduled matches."""
+
+    id: int
     home: str
     away: str
     date: Date
     referee_id: int | None = None
+
+    class Config:
+        orm_mode = True
 
 
 class RefereeSchema(BaseModel):
@@ -71,6 +89,7 @@ __all__ = [
     "Referee",
     "Availability",
     "Match",
+    "MatchSchema",
     "RefereeSchema",
     "AvailabilitySchema",
 ]

@@ -13,6 +13,7 @@ from ..models.referees import (
     Availability,
     AvailabilitySchema,
     Match,
+    MatchSchema,
     Referee,
     RefereeSchema,
 )
@@ -113,7 +114,7 @@ class MatchCreate(BaseModel):
     date: date
 
 
-@router.post("/schedule", response_model=List[Match])
+@router.post("/schedule", response_model=List[MatchSchema])
 def schedule_matches(
     matches: List[MatchCreate], db: Session = Depends(get_db)
 ) -> List[Match]:
@@ -130,6 +131,15 @@ def schedule_matches(
             )
         referee_id = avail.referee_id
         db.delete(avail)
-        db.commit()
-        assigned.append(Match(**match.dict(), referee_id=referee_id))
+        record = Match(
+            home=match.home,
+            away=match.away,
+            date=match.date,
+            referee_id=referee_id,
+        )
+        db.add(record)
+        assigned.append(record)
+    db.commit()
+    for m in assigned:
+        db.refresh(m)
     return assigned
