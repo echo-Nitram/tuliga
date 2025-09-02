@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend.routes.messages import router
-from backend.models import Base, engine
+from . import run_migrations
 
 app = FastAPI()
 app.include_router(router)
@@ -10,8 +10,7 @@ app.include_router(router)
 
 def setup_module(module):
     # Reset database for tests
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
 
 
 def test_message_flow():

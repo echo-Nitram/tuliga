@@ -3,8 +3,15 @@ from __future__ import annotations
 
 import os
 
-import mercadopago
-import stripe
+try:
+    import mercadopago  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    mercadopago = None
+
+try:
+    import stripe  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    stripe = None
 
 
 def process_payment(provider: str, amount: float, currency: str = "usd") -> str:
@@ -41,7 +48,7 @@ def process_payment(provider: str, amount: float, currency: str = "usd") -> str:
     try:
         if provider == "stripe":
             api_key = os.getenv("STRIPE_SECRET_KEY")
-            if api_key:
+            if api_key and stripe is not None:
                 stripe.api_key = api_key
                 intent = stripe.PaymentIntent.create(
                     amount=int(amount * 100),
@@ -54,7 +61,7 @@ def process_payment(provider: str, amount: float, currency: str = "usd") -> str:
 
         if provider == "mercadopago":
             access_token = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
-            if access_token:
+            if access_token and mercadopago is not None:
                 sdk = mercadopago.SDK(access_token)
                 payment_data = {
                     "transaction_amount": amount,
