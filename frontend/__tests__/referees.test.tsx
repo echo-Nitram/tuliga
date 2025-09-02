@@ -3,6 +3,7 @@ import RefereesPage from '../app/referees/page';
 import '@testing-library/jest-dom';
 
 test('renders referees and adds a new referee', async () => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000';
   const fetchMock = jest
     .fn()
     .mockResolvedValueOnce({
@@ -23,7 +24,9 @@ test('renders referees and adds a new referee', async () => {
   await waitFor(() => {
     expect(screen.getByText('Ref A - regional')).toBeInTheDocument();
   });
-  expect(fetchMock).toHaveBeenCalledWith('/api/referees');
+  expect(fetchMock).toHaveBeenCalledWith(
+    `${process.env.NEXT_PUBLIC_API_URL}/referees`
+  );
 
   fireEvent.change(screen.getByPlaceholderText('Name'), {
     target: { value: 'Ref B' },
@@ -37,7 +40,7 @@ test('renders referees and adds a new referee', async () => {
     expect(screen.getByText('Ref B - senior')).toBeInTheDocument();
   });
   expect(fetchMock).toHaveBeenLastCalledWith(
-    '/api/referees',
+    `${process.env.NEXT_PUBLIC_API_URL}/referees`,
     expect.objectContaining({ method: 'POST' })
   );
 

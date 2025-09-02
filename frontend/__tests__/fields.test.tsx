@@ -3,6 +3,7 @@ import FieldsPage from '../app/fields/page';
 import '@testing-library/jest-dom';
 
 test('renders fields and books a field', async () => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000';
   const fetchMock = jest
     .fn()
     .mockResolvedValueOnce({
@@ -21,13 +22,15 @@ test('renders fields and books a field', async () => {
   await waitFor(() => {
     expect(screen.getByText(/Field A/)).toBeInTheDocument();
   });
-  expect(fetchMock).toHaveBeenCalledWith('/api/fields');
+  expect(fetchMock).toHaveBeenCalledWith(
+    `${process.env.NEXT_PUBLIC_API_URL}/fields`
+  );
 
   fireEvent.click(screen.getByText('Reservar'));
 
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   expect(fetchMock).toHaveBeenLastCalledWith(
-    '/api/fields/1/bookings',
+    `${process.env.NEXT_PUBLIC_API_URL}/fields/1/bookings`,
     expect.objectContaining({ method: 'POST' })
   );
   expect(window.alert).toHaveBeenCalled();

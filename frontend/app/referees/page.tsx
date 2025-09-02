@@ -12,16 +12,17 @@ export default function RefereesPage() {
   const [refs, setRefs] = useState<Referee[]>([])
   const [name, setName] = useState('')
   const [level, setLevel] = useState('regional')
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
-    fetch('/api/referees')
+    fetch(`${baseUrl}/referees`)
       .then(res => res.json())
       .then(setRefs)
-  }, [])
+  }, [baseUrl])
 
   async function addReferee(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch('/api/referees', {
+    const res = await fetch(`${baseUrl}/referees`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, level })
