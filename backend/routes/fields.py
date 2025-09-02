@@ -1,23 +1,29 @@
 """Routes for field listing and booking with payment integration."""
 from __future__ import annotations
 
-import itertools
 from datetime import datetime
-from typing import Dict, List
+from typing import List
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import Session
 
 from ..core.payments import process_payment
-from ..models.fields import Booking, Field
+from ..models import Base, SessionLocal, engine
+from ..models.fields import Booking as BookingModel, Field as FieldModel
 
 router = APIRouter(prefix="/fields")
 
-# in-memory storage
-_fields: Dict[int, Field] = {}
-_bookings: Dict[int, Booking] = {}
-_field_id_seq = itertools.count(1)
-_booking_id_seq = itertools.count(1)
+# Ensure tables exist
+Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class FieldCreate(BaseModel):
@@ -26,44 +32,67 @@ class FieldCreate(BaseModel):
     price_per_hour: float
 
 
+class FieldOut(FieldCreate):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class BookingRequest(BaseModel):
     start_time: datetime
     end_time: datetime
     provider: str
 
 
-@router.post("", response_model=Field)
-def create_field(payload: FieldCreate) -> Field:
-    field_id = next(_field_id_seq)
-    field = Field(id=field_id, **payload.dict())
-    _fields[field_id] = field
-    return field
+class BookingOut(BaseModel):
+    id: int
+    field_id: int
+    start_time: datetime
+    end_time: datetime
+    paid: bool
+    payment_id: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-@router.get("", response_model=List[Field])
-def list_fields() -> List[Field]:
-    return list(_fields.values())
+@router.post("", response_model=FieldOut)
+def create_field(payload: FieldCreate, db: Session = Depends(get_db)) -> FieldOut:
+    field = FieldModel(**payload.model_dump())
+    db.add(field)
+    db.commit()
+    db.refresh(field)
+    return FieldOut.model_validate(field)
 
 
-@router.post("/{field_id}/bookings", response_model=Booking)
-def book_field(field_id: int, payload: BookingRequest) -> Booking:
-    field = _fields.get(field_id)
+@router.get("", response_model=List[FieldOut])
+def list_fields(db: Session = Depends(get_db)) -> List[FieldOut]:
+    fields = db.query(FieldModel).all()
+    return [FieldOut.model_validate(f) for f in fields]
+
+
+@router.post("/{field_id}/bookings", response_model=BookingOut)
+def book_field(
+    field_id: int, payload: BookingRequest, db: Session = Depends(get_db)
+) -> BookingOut:
+    field = db.get(FieldModel, field_id)
     if not field:
         raise HTTPException(status_code=404, detail="Field not found")
     payment_id = process_payment(payload.provider, field.price_per_hour)
-    booking_id = next(_booking_id_seq)
-    booking = Booking(
-        id=booking_id,
+    booking = BookingModel(
         field_id=field_id,
         start_time=payload.start_time,
         end_time=payload.end_time,
         paid=True,
         payment_id=payment_id,
     )
-    _bookings[booking_id] = booking
-    return booking
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+    return BookingOut.model_validate(booking)
 
 
-@router.get("/bookings", response_model=List[Booking])
-def list_bookings() -> List[Booking]:
-    return list(_bookings.values())
+@router.get("/bookings", response_model=List[BookingOut])
+def list_bookings(db: Session = Depends(get_db)) -> List[BookingOut]:
+    bookings = db.query(BookingModel).all()
+    return [BookingOut.model_validate(b) for b in bookings]
+

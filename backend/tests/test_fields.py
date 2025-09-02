@@ -1,14 +1,21 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from backend.models import Base, engine
 from backend.routes.fields import router
 
 app = FastAPI()
 app.include_router(router)
-client = TestClient(app)
+
+
+def setup_module(module):
+    # Reset database for tests
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
 
 def test_field_booking_flow():
+    client = TestClient(app)
     # create field
     res = client.post(
         "/fields",
@@ -33,3 +40,4 @@ def test_field_booking_flow():
     booking = res.json()
     assert booking["paid"] is True
     assert booking["payment_id"].startswith("stripe_")
+
