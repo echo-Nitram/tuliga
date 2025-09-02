@@ -1,7 +1,23 @@
+import sys
 import types
 from unittest.mock import Mock
-import mercadopago
-import stripe
+
+# The payments tests run without the real Stripe and MercadoPago SDKs. When
+# those packages are missing we insert small stand-ins into ``sys.modules`` so
+# that the production code can import and monkeypatch them normally.
+try:  # pragma: no cover - executed only when SDKs are missing
+    import stripe  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    stripe = types.SimpleNamespace(
+        PaymentIntent=types.SimpleNamespace(create=lambda *a, **k: None)
+    )
+    sys.modules["stripe"] = stripe  # type: ignore
+
+try:  # pragma: no cover - executed only when SDKs are missing
+    import mercadopago  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    mercadopago = types.SimpleNamespace(SDK=object)
+    sys.modules["mercadopago"] = mercadopago  # type: ignore
 
 from backend.core.payments import process_payment
 
