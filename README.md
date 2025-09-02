@@ -139,6 +139,10 @@ Ver esquema completo en `combined-schema.sql`.
 
 ## 🧪 Testing
 
+Durante las pruebas se utiliza una base de datos en memoria. El entorno de test
+establece `DATABASE_URL=sqlite:///:memory:` de forma automática, pero puedes
+sobrescribirlo si necesitas apuntar a otro motor.
+
 ```bash
 # Backend tests
 cd backend
