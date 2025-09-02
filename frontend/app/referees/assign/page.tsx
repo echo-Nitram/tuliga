@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 export default function AssignRefereesPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
   const [home, setHome] = useState('')
   const [away, setAway] = useState('')
   const [date, setDate] = useState('')
@@ -10,7 +11,7 @@ export default function AssignRefereesPage() {
 
   async function schedule(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch('/api/referees/schedule', {
+    const res = await fetch(`${baseUrl}/referees/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify([{ home, away, date }])
