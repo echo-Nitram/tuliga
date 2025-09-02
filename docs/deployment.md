@@ -9,7 +9,7 @@ Esta guía explica cómo instalar las dependencias del proyecto y realizar prueb
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install fastapi sqlalchemy httpx
+pip install fastapi sqlalchemy httpx stripe mercadopago
 ```
 
 ### Frontend Web/PWA
@@ -46,3 +46,20 @@ npx expo start
 ```
 
 Tanto la PWA como el cliente React Native pueden reutilizar los endpoints existentes de autenticación y fixtures del backend.
+
+## Variables de entorno
+
+Configura las credenciales necesarias para los proveedores de pago creando un archivo `.env` basado en `.env.example`:
+
+```bash
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_PUBLIC_KEY=pk_live_...
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
+MERCADOPAGO_PUBLIC_KEY=TEST-...
+```
+
+## Consideraciones de producción
+
+- Usa las claves de producción proporcionadas por cada servicio.
+- Asegura los endpoints HTTPS y configura los webhooks de notificación de pagos.
+- Maneja los errores de los SDKs y registra los intentos fallidos para poder reintentarlos.
