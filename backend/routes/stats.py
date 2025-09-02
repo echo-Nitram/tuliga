@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
+
 @router.get("/summary")
 def get_summary_stats():
     """Return consolidated summary statistics for the dashboard."""
@@ -11,6 +12,7 @@ def get_summary_stats():
         "total_matches": 66,
         "avg_goals_per_match": 3.2,
     }
+
 
 @router.get("/players/top")
 def get_top_players():
