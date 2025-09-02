@@ -11,3 +11,15 @@ clasificación de los equipos utilizando los siguientes criterios:
 
 Los equipos se ordenan de forma descendente considerando, en ese orden, los
 puntos obtenidos, la diferencia de goles y los goles a favor.
+
+## Integración con API-Football
+
+El backend puede consultar datos de ligas externas a través del endpoint `/external-leagues`.
+El flujo de integración es el siguiente:
+
+1. `main.py` recibe la petición REST.
+2. Se llama al servicio `services/api_football.py`.
+3. El servicio realiza la solicitud HTTP a API-Football usando las variables de entorno `API_FOOTBALL_HOST` y `API_FOOTBALL_KEY`.
+4. La respuesta de la API externa se devuelve al cliente sin modificaciones.
+
+Para ejecutar localmente se deben definir dichas variables de entorno (ver `.env.example`).
