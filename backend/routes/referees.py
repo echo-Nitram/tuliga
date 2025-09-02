@@ -1,21 +1,34 @@
 """Routes for referee CRUD and match planning."""
 from __future__ import annotations
 
-import itertools
 from datetime import date
-from typing import Dict, List
+from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from ..models.referees import Availability, Match, Referee
+from ..models import Base, SessionLocal, engine
+from ..models.referees import (
+    Availability,
+    AvailabilitySchema,
+    Match,
+    Referee,
+    RefereeSchema,
+)
 
 router = APIRouter(prefix="/referees")
 
-# in-memory storage
-_referees: Dict[int, Referee] = {}
-_availability: Dict[int, set[date]] = {}
-_id_sequence = itertools.count(1)
+# Create tables when router is imported
+Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class RefereeCreate(BaseModel):
@@ -23,42 +36,49 @@ class RefereeCreate(BaseModel):
     level: str = "regional"
 
 
-@router.post("", response_model=Referee)
-def create_referee(payload: RefereeCreate) -> Referee:
-    referee_id = next(_id_sequence)
-    referee = Referee(id=referee_id, **payload.dict())
-    _referees[referee_id] = referee
+@router.post("", response_model=RefereeSchema)
+def create_referee(payload: RefereeCreate, db: Session = Depends(get_db)) -> Referee:
+    referee = Referee(name=payload.name, level=payload.level)
+    db.add(referee)
+    db.commit()
+    db.refresh(referee)
     return referee
 
 
-@router.get("", response_model=List[Referee])
-def list_referees() -> List[Referee]:
-    return list(_referees.values())
+@router.get("", response_model=List[RefereeSchema])
+def list_referees(db: Session = Depends(get_db)) -> List[Referee]:
+    return db.query(Referee).all()
 
 
-@router.get("/{referee_id}", response_model=Referee)
-def get_referee(referee_id: int) -> Referee:
-    referee = _referees.get(referee_id)
+@router.get("/{referee_id}", response_model=RefereeSchema)
+def get_referee(referee_id: int, db: Session = Depends(get_db)) -> Referee:
+    referee = db.get(Referee, referee_id)
     if not referee:
         raise HTTPException(status_code=404, detail="Referee not found")
     return referee
 
 
-@router.put("/{referee_id}", response_model=Referee)
-def update_referee(referee_id: int, payload: RefereeCreate) -> Referee:
-    if referee_id not in _referees:
+@router.put("/{referee_id}", response_model=RefereeSchema)
+def update_referee(
+    referee_id: int, payload: RefereeCreate, db: Session = Depends(get_db)
+) -> Referee:
+    referee = db.get(Referee, referee_id)
+    if not referee:
         raise HTTPException(status_code=404, detail="Referee not found")
-    referee = Referee(id=referee_id, **payload.dict())
-    _referees[referee_id] = referee
+    referee.name = payload.name
+    referee.level = payload.level
+    db.commit()
+    db.refresh(referee)
     return referee
 
 
 @router.delete("/{referee_id}")
-def delete_referee(referee_id: int) -> dict:
-    if referee_id not in _referees:
+def delete_referee(referee_id: int, db: Session = Depends(get_db)) -> dict:
+    referee = db.get(Referee, referee_id)
+    if not referee:
         raise HTTPException(status_code=404, detail="Referee not found")
-    _referees.pop(referee_id)
-    _availability.pop(referee_id, None)
+    db.delete(referee)
+    db.commit()
     return {"status": "deleted"}
 
 
@@ -66,20 +86,28 @@ class AvailabilityRequest(BaseModel):
     date: date
 
 
-@router.post("/{referee_id}/availability", response_model=Availability)
-def add_availability(referee_id: int, payload: AvailabilityRequest) -> Availability:
-    if referee_id not in _referees:
+@router.post("/{referee_id}/availability", response_model=AvailabilitySchema)
+def add_availability(
+    referee_id: int, payload: AvailabilityRequest, db: Session = Depends(get_db)
+) -> Availability:
+    if not db.get(Referee, referee_id):
         raise HTTPException(status_code=404, detail="Referee not found")
-    _availability.setdefault(referee_id, set()).add(payload.date)
-    return Availability(referee_id=referee_id, date=payload.date)
+    availability = Availability(referee_id=referee_id, date=payload.date)
+    db.merge(availability)
+    db.commit()
+    return availability
 
 
-@router.get("/{referee_id}/availability", response_model=List[Availability])
-def list_availability(referee_id: int) -> List[Availability]:
-    if referee_id not in _referees:
+@router.get("/{referee_id}/availability", response_model=List[AvailabilitySchema])
+def list_availability(referee_id: int, db: Session = Depends(get_db)) -> List[Availability]:
+    if not db.get(Referee, referee_id):
         raise HTTPException(status_code=404, detail="Referee not found")
-    dates = _availability.get(referee_id, set())
-    return [Availability(referee_id=referee_id, date=d) for d in sorted(dates)]
+    return (
+        db.query(Availability)
+        .filter(Availability.referee_id == referee_id)
+        .order_by(Availability.date)
+        .all()
+    )
 
 
 class MatchCreate(BaseModel):
@@ -89,12 +117,22 @@ class MatchCreate(BaseModel):
 
 
 @router.post("/schedule", response_model=List[Match])
-def schedule_matches(matches: List[MatchCreate]) -> List[Match]:
+def schedule_matches(
+    matches: List[MatchCreate], db: Session = Depends(get_db)
+) -> List[Match]:
     assigned: List[Match] = []
     for match in matches:
-        referee_id = next((rid for rid, dates in _availability.items() if match.date in dates), None)
-        if referee_id is None:
-            raise HTTPException(status_code=400, detail=f"No referee available for {match.date}")
-        _availability[referee_id].remove(match.date)
+        avail = (
+            db.query(Availability)
+            .filter(Availability.date == match.date)
+            .first()
+        )
+        if avail is None:
+            raise HTTPException(
+                status_code=400, detail=f"No referee available for {match.date}"
+            )
+        referee_id = avail.referee_id
+        db.delete(avail)
+        db.commit()
         assigned.append(Match(**match.dict(), referee_id=referee_id))
     return assigned
