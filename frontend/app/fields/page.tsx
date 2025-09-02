@@ -12,17 +12,18 @@ interface Field {
 export default function FieldsPage() {
   const [fields, setFields] = useState<Field[]>([])
   const [provider, setProvider] = useState('stripe')
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
-    fetch('/api/fields')
+    fetch(`${baseUrl}/fields`)
       .then(res => res.json())
       .then(setFields)
-  }, [])
+  }, [baseUrl])
 
   async function book(fieldId: number) {
     const now = new Date()
     const end = new Date(now.getTime() + 60 * 60 * 1000)
-    await fetch(`/api/fields/${fieldId}/bookings`, {
+    await fetch(`${baseUrl}/fields/${fieldId}/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
