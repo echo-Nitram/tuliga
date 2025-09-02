@@ -1,11 +1,24 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from ..services.ranking import SAMPLE_MATCHES, calculate_ranking
+from ..models import Base, SessionLocal, engine
+from ..services.ranking import get_ranking as compute_ranking
 
 router = APIRouter()
 
+# Ensure tables exist
+Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 @router.get("/ranking")
-def get_ranking():
+def get_ranking(db: Session = Depends(get_db)):
     """Expose ranking computed from tournament results."""
-    return calculate_ranking(SAMPLE_MATCHES)
+    return compute_ranking(db)
