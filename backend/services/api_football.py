@@ -8,6 +8,8 @@ import requests
 
 API_FOOTBALL_HOST = os.getenv("API_FOOTBALL_HOST", "https://api-football-v1.p.rapidapi.com/v3")
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY", "")
+if not API_FOOTBALL_KEY:
+    raise RuntimeError("API_FOOTBALL_KEY environment variable must be set")
 
 
 def fetch_leagues(country: Optional[str] = None) -> Dict[str, Any]:
