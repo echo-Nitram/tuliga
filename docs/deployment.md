@@ -49,9 +49,12 @@ Tanto la PWA como el cliente React Native pueden reutilizar los endpoints existe
 
 ## Variables de entorno
 
-Configura las credenciales necesarias para los proveedores de pago creando un archivo `.env` basado en `.env.example`:
+Configura las credenciales necesarias para los proveedores de pago y de la API de fútbol creando un archivo `.env` basado en `.env.example`.
+
+Sin `API_FOOTBALL_KEY` el backend no podrá comunicarse con la API externa y se detendrá al iniciar.
 
 ```bash
+API_FOOTBALL_KEY=tu_clave_de_api_football
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_PUBLIC_KEY=pk_live_...
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
