@@ -1,17 +1,12 @@
 from collections import defaultdict
 from typing import Iterable, List, Dict
 
-Match = Dict[str, int | str]
+from sqlalchemy.orm import Session
 
-# Sample match data to illustrate ranking calculations
-SAMPLE_MATCHES: List[Match] = [
-    {"home": "Team A", "away": "Team B", "home_goals": 2, "away_goals": 1},
-    {"home": "Team C", "away": "Team A", "home_goals": 0, "away_goals": 3},
-    {"home": "Team B", "away": "Team C", "home_goals": 1, "away_goals": 1},
-]
+from ..models.matches import Match
 
 
-def calculate_ranking(matches: Iterable[Match]) -> List[Dict[str, int | str]]:
+def calculate_ranking(matches: Iterable[Match | Dict[str, int | str]]) -> List[Dict[str, int | str]]:
     """Aggregate match results into a ranking table.
 
     Teams are ordered by points, goal difference and goals scored.
@@ -29,10 +24,16 @@ def calculate_ranking(matches: Iterable[Match]) -> List[Dict[str, int | str]]:
     )
 
     for m in matches:
-        home = m["home"]
-        away = m["away"]
-        hg = int(m["home_goals"])
-        ag = int(m["away_goals"])
+        if isinstance(m, dict):
+            home = m["home"]
+            away = m["away"]
+            hg = int(m["home_goals"])
+            ag = int(m["away_goals"])
+        else:
+            home = m.home
+            away = m.away
+            hg = int(m.home_goals)
+            ag = int(m.away_goals)
 
         stats[home]["played"] += 1
         stats[away]["played"] += 1
@@ -65,3 +66,9 @@ def calculate_ranking(matches: Iterable[Match]) -> List[Dict[str, int | str]]:
         key=lambda t: (t["points"], t["goal_difference"], t["goals_for"]),
         reverse=True,
     )
+
+
+def get_ranking(db: Session) -> List[Dict[str, int | str]]:
+    """Fetch matches from the database and compute the ranking table."""
+    matches = db.query(Match).all()
+    return calculate_ranking(matches)
