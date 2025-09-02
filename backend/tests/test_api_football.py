@@ -1,14 +1,13 @@
 """Tests for the API-Football service integration."""
 from fastapi.testclient import TestClient
 import pytest
-import sys
 
 
 def test_external_leagues(monkeypatch):
     """Ensure the endpoint returns data when the API key is set."""
     monkeypatch.setenv("API_FOOTBALL_KEY", "test-key")
 
-    # Import after setting the environment variable so the module loads correctly
+    # Import after setting the environment variable so the endpoint uses the test key
     from backend.app.main import app  # pylint: disable=import-error
     import backend.services.api_football as api_football
 
@@ -30,9 +29,10 @@ def test_external_leagues(monkeypatch):
 
 
 def test_missing_api_key(monkeypatch):
-    """Module import should fail if the API key is absent."""
+    """fetch_leagues should raise if the API key is absent."""
     monkeypatch.delenv("API_FOOTBALL_KEY", raising=False)
-    sys.modules.pop("backend.services.api_football", None)
+    from backend.services import api_football
+
     with pytest.raises(RuntimeError):
-        import backend.services.api_football  # noqa: F401, PTC-W003
+        api_football.fetch_leagues()
 
