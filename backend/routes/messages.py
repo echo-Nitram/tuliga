@@ -30,6 +30,12 @@ def create_conversation(conversation: ConversationCreate, db: Session = Depends(
     return {"id": convo.id, "title": convo.title}
 
 
+@router.get("/conversations")
+def list_conversations(db: Session = Depends(get_db)):
+    convos = db.query(Conversation).order_by(Conversation.id).all()
+    return [{"id": c.id, "title": c.title} for c in convos]
+
+
 class MessageCreate(BaseModel):
     sender: str
     content: str
