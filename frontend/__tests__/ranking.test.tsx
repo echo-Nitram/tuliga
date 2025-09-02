@@ -3,6 +3,7 @@ import RankingPage from '../app/ranking';
 import '@testing-library/jest-dom';
 
 test('renders ranking fetched from API', async () => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000';
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => [
@@ -19,7 +20,7 @@ test('renders ranking fetched from API', async () => {
     expect(screen.getByText('Team B')).toBeInTheDocument();
   });
 
-  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/ranking');
+  expect(global.fetch).toHaveBeenCalledWith(`${process.env.NEXT_PUBLIC_API_URL}/ranking`);
 
   (global.fetch as jest.Mock).mockRestore?.();
 });

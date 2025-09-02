@@ -12,10 +12,11 @@ interface Message {
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   async function fetchMessages() {
     try {
-      const res = await fetch("http://localhost:8000/conversations/1/messages");
+      const res = await fetch(`${baseUrl}/conversations/1/messages`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
@@ -33,7 +34,7 @@ export default function MessagesPage() {
 
   async function sendMessage() {
     if (!input) return;
-    await fetch("http://localhost:8000/conversations/1/messages", {
+    await fetch(`${baseUrl}/conversations/1/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sender: "User", content: input }),

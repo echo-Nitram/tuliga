@@ -17,7 +17,8 @@ export default function RankingPage() {
   const [rows, setRows] = useState<TeamRow[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/ranking')
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    fetch(`${baseUrl}/ranking`)
       .then((res) => res.json())
       .then(setRows)
       .catch(console.error);
