@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend.routes.referees import router
+from backend.models import SessionLocal
+from backend.models.referees import Match
 from . import run_migrations
 
 app = FastAPI()
@@ -52,4 +54,14 @@ def test_schedule_with_availability():
     assigned = resp.json()[0]
     assert assigned["referee_id"] == rid
     assert client.get(f"/referees/{rid}/availability").json() == []
+
+    db = SessionLocal()
+    stored = db.query(Match).all()
+    assert len(stored) == 1
+    persisted = stored[0]
+    assert persisted.home == "A"
+    assert persisted.away == "B"
+    assert persisted.referee_id == rid
+    assert persisted.date.isoformat() == avail_date
+    db.close()
 
