@@ -74,6 +74,17 @@ def book_field(
     field = db.get(FieldModel, field_id)
     if not field:
         raise HTTPException(status_code=404, detail="Field not found")
+    conflict = (
+        db.query(BookingModel)
+        .filter(
+            BookingModel.field_id == field_id,
+            BookingModel.start_time < payload.end_time,
+            BookingModel.end_time > payload.start_time,
+        )
+        .first()
+    )
+    if conflict:
+        raise HTTPException(status_code=400, detail="Field already booked for this time")
     payment_id = process_payment(payload.provider, field.price_per_hour)
     booking = BookingModel(
         field_id=field_id,
