@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..models import Base, SessionLocal, engine
+from ..models import SessionLocal
 from ..services.ranking import get_ranking as compute_ranking
 
 router = APIRouter()
-
-# Ensure tables exist
-Base.metadata.create_all(bind=engine)
 
 
 def get_db():

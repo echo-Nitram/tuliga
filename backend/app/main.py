@@ -1,10 +1,23 @@
 """Main FastAPI application including external API integrations."""
 from __future__ import annotations
 
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 
 from backend.routes import fields, messages, referees, ranking, stats, tournaments
 from backend.services.api_football import fetch_leagues
+
+
+def run_migrations() -> None:
+    """Apply database migrations at application startup."""
+    cfg = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    command.upgrade(cfg, "head")
+
+
+run_migrations()
 
 app = FastAPI()
 
