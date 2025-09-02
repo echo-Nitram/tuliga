@@ -192,7 +192,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - [ ] **Integración API-Football.com** - Datos externos de ligas profesionales
 - [ ] **Generador automático de fixtures** - Algoritmos optimizados
 - [ ] **Dashboard estadísticas avanzadas** - Gráficos y métricas
-- [ ] **CI/CD Pipeline** - GitHub Actions
+- [x] **CI/CD Pipeline** - GitHub Actions
 
 ### 📋 Próximas Funcionalidades
 - [ ] **Sistema de comunicaciones** interno entre equipos
@@ -203,7 +203,22 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas! Por favor:
+Las contribuciones son bienvenidas! Este repositorio cuenta con un pipeline de GitHub Actions que ejecuta:
+
+- `flake8` para linting de Python
+- `pytest` para tests del backend
+- `npm test` para el frontend (si existe `frontend/`)
+- `docker build` y un paso de deploy al hacer push a `main`
+
+Antes de abrir un Pull Request asegúrate de que los comandos anteriores pasen localmente:
+
+```bash
+flake8 backend --max-line-length=120
+pytest backend
+cd frontend && npm test  # si existe
+```
+
+Luego sigue estos pasos:
 
 1. 🍴 **Fork** el repositorio
 2. 🌿 **Crea una rama:** `git checkout -b feature/nueva-funcionalidad`
