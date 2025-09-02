@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend.routes.ranking import router
-from backend.models import Base, engine, SessionLocal
+from backend.models import SessionLocal
+from . import run_migrations
 from backend.models.matches import Match
 
 app = FastAPI()
@@ -11,8 +12,7 @@ app.include_router(router)
 
 def setup_module(module):
     # Reset database for tests
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
 
 
 def _insert_sample_matches():

@@ -10,6 +10,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from models import Base, DATABASE_URL
 import models.fields  # noqa: F401
 import models.referees  # noqa: F401
+import models.players  # noqa: F401
+import models.matches  # noqa: F401
+import models.conversations  # noqa: F401
+import models.messages  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

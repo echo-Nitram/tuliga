@@ -2,14 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..models import Base, SessionLocal, engine
+from ..models import SessionLocal
 from ..models.matches import Match
 from ..models.players import Player
 
 router = APIRouter(prefix="/stats", tags=["stats"])
-
-# Ensure tables exist for stats routes
-Base.metadata.create_all(bind=engine)
 
 
 def get_db():

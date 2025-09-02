@@ -3,17 +3,17 @@ from fastapi.testclient import TestClient
 import pytest
 
 from backend.routes.stats import router
-from backend.models import Base, engine, SessionLocal
+from backend.models import SessionLocal
 from backend.models.players import Player
 from backend.models.matches import Match
+from . import run_migrations
 
 app = FastAPI()
 app.include_router(router)
 
 
 def _setup_sample_data():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
     db = SessionLocal()
     db.add_all(
         [
