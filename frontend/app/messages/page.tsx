@@ -102,11 +102,17 @@ export default function MessagesPage() {
             value={activeConversationId ?? ""}
             onChange={(e) => setActiveConversationId(Number(e.target.value))}
           >
-            {conversations.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title || `Conversation ${c.id}`}
+            {conversations.length === 0 ? (
+              <option value="" disabled>
+                No conversations
               </option>
-            ))}
+            ) : (
+              conversations.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title || `Conversation ${c.id}`}
+                </option>
+              ))
+            )}
           </select>
         </label>
       </div>
