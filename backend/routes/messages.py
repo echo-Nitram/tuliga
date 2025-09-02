@@ -2,14 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..models import SessionLocal, Base, engine
+from ..models import SessionLocal
 from ..models.conversations import Conversation
 from ..models.messages import Message
 
 router = APIRouter()
-
-# Create tables when router is imported
-Base.metadata.create_all(bind=engine)
 
 
 def get_db():

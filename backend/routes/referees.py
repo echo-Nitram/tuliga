@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..models import Base, SessionLocal, engine
+from ..models import SessionLocal
 from ..models.referees import (
     Availability,
     AvailabilitySchema,
@@ -18,9 +18,6 @@ from ..models.referees import (
 )
 
 router = APIRouter(prefix="/referees")
-
-# Create tables when router is imported
-Base.metadata.create_all(bind=engine)
 
 
 def get_db():

@@ -9,13 +9,10 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from ..core.payments import process_payment
-from ..models import Base, SessionLocal, engine
+from ..models import SessionLocal
 from ..models.fields import Booking as BookingModel, Field as FieldModel
 
 router = APIRouter(prefix="/fields")
-
-# Ensure tables exist
-Base.metadata.create_all(bind=engine)
 
 
 def get_db():
