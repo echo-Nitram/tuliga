@@ -1,23 +1,10 @@
 from datetime import date
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from backend.routes.referees import router
 from backend.models import SessionLocal
 from backend.models.referees import Match
-from . import run_migrations
-
-app = FastAPI()
-app.include_router(router)
 
 
-def setup_module(module):
-    run_migrations()
-
-
-def test_referee_crud_flow():
-    client = TestClient(app)
+def test_referee_crud_flow(client):
     # create
     resp = client.post("/referees", json={"name": "Ana", "level": "senior"})
     assert resp.status_code == 200
@@ -36,8 +23,7 @@ def test_referee_crud_flow():
     assert client.get("/referees").json() == []
 
 
-def test_schedule_with_availability():
-    client = TestClient(app)
+def test_schedule_with_availability(client):
     # create referee and availability
     rid = client.post("/referees", json={"name": "Luis"}).json()["id"]
     avail_date = date(2024, 1, 1).isoformat()

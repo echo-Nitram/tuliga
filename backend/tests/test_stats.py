@@ -1,19 +1,11 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 import pytest
 
-from backend.routes.stats import router
 from backend.models import SessionLocal
 from backend.models.players import Player
 from backend.models.matches import Match
-from . import run_migrations
-
-app = FastAPI()
-app.include_router(router)
 
 
 def _setup_sample_data():
-    run_migrations()
     db = SessionLocal()
     db.add_all(
         [
@@ -33,9 +25,8 @@ def _setup_sample_data():
     db.close()
 
 
-def test_get_summary_stats():
+def test_get_summary_stats(client):
     _setup_sample_data()
-    client = TestClient(app)
     resp = client.get("/stats/summary")
     assert resp.status_code == 200
     data = resp.json()
@@ -45,9 +36,8 @@ def test_get_summary_stats():
     assert data["avg_goals_per_match"] == pytest.approx(8 / 3)
 
 
-def test_get_top_players():
+def test_get_top_players(client):
     _setup_sample_data()
-    client = TestClient(app)
     resp = client.get("/stats/players/top")
     assert resp.status_code == 200
     data = resp.json()

@@ -1,20 +1,4 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from backend.routes.messages import router
-from . import run_migrations
-
-app = FastAPI()
-app.include_router(router)
-
-
-def setup_module(module):
-    # Reset database for tests
-    run_migrations()
-
-
-def test_message_flow():
-    client = TestClient(app)
+def test_message_flow(client):
     # Create conversation
     response = client.post("/conversations", json={"title": "General"})
     assert response.status_code == 200
@@ -42,10 +26,7 @@ def test_message_flow():
     assert messages[1]["sender"] == "Bob"
 
 
-def test_list_conversations():
-    run_migrations()
-    client = TestClient(app)
-
+def test_list_conversations(client):
     r0 = client.get("/conversations")
     assert r0.status_code == 200
     assert r0.json() == []
