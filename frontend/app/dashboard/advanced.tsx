@@ -27,16 +27,17 @@ interface PlayerStat {
 export default function AdvancedDashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [players, setPlayers] = useState<PlayerStat[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    fetch('/api/stats/summary')
+    fetch(`${baseUrl}/stats/summary`)
       .then(res => res.json())
       .then(setSummary);
 
-    fetch('/api/stats/players/top')
+    fetch(`${baseUrl}/stats/players/top`)
       .then(res => res.json())
       .then(setPlayers);
-  }, []);
+  }, [baseUrl]);
 
   return (
     <div className="p-4 space-y-8">
