@@ -1,18 +1,5 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from backend.routes.ranking import router
 from backend.models import SessionLocal
-from . import run_migrations
 from backend.models.matches import Match
-
-app = FastAPI()
-app.include_router(router)
-
-
-def setup_module(module):
-    # Reset database for tests
-    run_migrations()
 
 
 def _insert_sample_matches():
@@ -28,9 +15,8 @@ def _insert_sample_matches():
     db.close()
 
 
-def test_ranking_endpoint_returns_sorted_table():
+def test_ranking_endpoint_returns_sorted_table(client):
     _insert_sample_matches()
-    client = TestClient(app)
     resp = client.get("/ranking")
     assert resp.status_code == 200
     table = resp.json()

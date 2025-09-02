@@ -1,20 +1,4 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from backend.routes.fields import router
-from . import run_migrations
-
-app = FastAPI()
-app.include_router(router)
-
-
-def setup_module(module):
-    # Reset database for tests
-    run_migrations()
-
-
-def test_field_booking_flow():
-    client = TestClient(app)
+def test_field_booking_flow(client):
     # create field
     res = client.post(
         "/fields",
@@ -41,8 +25,7 @@ def test_field_booking_flow():
     assert booking["payment_id"].startswith("stripe_")
 
 
-def test_booking_conflict_validation():
-    client = TestClient(app)
+def test_booking_conflict_validation(client):
     res = client.post(
         "/fields",
         json={"name": "Downtown", "location": "NYC", "price_per_hour": 75.0},
