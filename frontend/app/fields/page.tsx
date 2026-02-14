@@ -52,31 +52,61 @@ export default function FieldsPage() {
     }
   }
 
-  if (loading) return <div className="p-4">Cargando canchas...</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-gray-400 text-lg">Cargando canchas...</div>
+      </div>
+    )
+  }
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Canchas</h1>
+      <h1 className="text-3xl font-bold mb-6">Canchas</h1>
+
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {error}
         </div>
       )}
-      <div className="mb-4">
-        <label className="mr-2">Proveedor de pago:</label>
-        <select value={provider} onChange={e => setProvider(e.target.value)} className="border px-2">
-          <option value="stripe">Stripe</option>
-          <option value="mercadopago">MercadoPago</option>
-        </select>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-500 font-medium">Proveedor de pago:</label>
+          <select
+            value={provider}
+            onChange={e => setProvider(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="stripe">Stripe</option>
+            <option value="mercadopago">MercadoPago</option>
+          </select>
+        </div>
       </div>
-      <ul>
-        {fields.map(f => (
-          <li key={f.id} className="mb-2">
-            <span className="mr-2">{f.name} - {f.location} (${f.price_per_hour}/h)</span>
-            <button onClick={() => book(f.id)} className="bg-green-500 text-white px-2">Reservar</button>
-          </li>
-        ))}
-      </ul>
+
+      {fields.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+          No hay canchas disponibles
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {fields.map(f => (
+            <div key={f.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-semibold text-gray-900 text-lg mb-1">{f.name}</h3>
+              <p className="text-sm text-gray-500 mb-1">{f.location}</p>
+              <p className="text-emerald-700 font-bold text-lg mb-3">
+                ${f.price_per_hour}<span className="text-sm font-normal text-gray-400">/hora</span>
+              </p>
+              <button
+                onClick={() => book(f.id)}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition-colors"
+              >
+                Reservar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
