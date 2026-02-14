@@ -1,14 +1,6 @@
 import itertools
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from backend.core.fixtures import FixtureGenerator
-from backend.routes.tournaments import router
-
-
-app = FastAPI()
-app.include_router(router)
 
 
 def test_round_robin_generator():
@@ -29,26 +21,32 @@ def test_elimination_generator():
     assert bracket[1][0] == ("Winner R1M1", "Winner R1M2")
 
 
-def test_route_integration_round_robin():
-    client = TestClient(app)
-    response = client.post(
-        "/tournaments",
-        json={"name": "League", "teams": ["A", "B", "C", "D"], "format": "round_robin"},
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["name"] == "League"
-    # total matches should be 6 (4 choose 2)
-    matches = [m for r in data["fixtures"] for m in r]
-    assert len(matches) == 6
+def test_route_tournament_crud(client):
+    # Create teams first
+    teams = []
+    for name, city in [("Team A", "City A"), ("Team B", "City B"), ("Team C", "City C"), ("Team D", "City D")]:
+        resp = client.post("/teams", json={"name": name, "city": city})
+        assert resp.status_code == 201
+        teams.append(resp.json())
 
+    # Create tournament
+    resp = client.post("/tournaments", json={"name": "League", "format": "round_robin"})
+    assert resp.status_code == 201
+    tournament = resp.json()
+    tournament_id = tournament["id"]
 
-def test_route_integration_elimination():
-    client = TestClient(app)
-    response = client.post(
-        "/tournaments",
-        json={"name": "Cup", "teams": ["A", "B", "C", "D"], "format": "elimination"},
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["fixtures"][1][0] == ["Winner R1M1", "Winner R1M2"]
+    # Register teams
+    for t in teams:
+        resp = client.post(f"/tournaments/{tournament_id}/teams", json={"team_id": t["id"]})
+        assert resp.status_code == 201
+
+    # Generate fixtures
+    resp = client.post(f"/tournaments/{tournament_id}/generate")
+    assert resp.status_code == 200
+    fixtures = resp.json()
+    assert len(fixtures) == 6  # 4 choose 2
+
+    # List fixtures
+    resp = client.get(f"/tournaments/{tournament_id}/fixtures")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 6

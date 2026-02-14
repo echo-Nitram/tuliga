@@ -12,32 +12,56 @@ interface Field {
 export default function FieldsPage() {
   const [fields, setFields] = useState<Field[]>([])
   const [provider, setProvider] = useState('stripe')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
+    setLoading(true)
     fetch(`${baseUrl}/fields`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Error ${res.status}`)
+        return res.json()
+      })
       .then(setFields)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
   }, [baseUrl])
 
   async function book(fieldId: number) {
-    const now = new Date()
-    const end = new Date(now.getTime() + 60 * 60 * 1000)
-    await fetch(`${baseUrl}/fields/${fieldId}/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        start_time: now.toISOString(),
-        end_time: end.toISOString(),
-        provider
+    setError(null)
+    try {
+      const now = new Date()
+      const end = new Date(now.getTime() + 60 * 60 * 1000)
+      const res = await fetch(`${baseUrl}/fields/${fieldId}/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          start_time: now.toISOString(),
+          end_time: end.toISOString(),
+          provider
+        })
       })
-    })
-    alert('Reserva confirmada')
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.detail || `Error ${res.status}`)
+      }
+      alert('Reserva confirmada')
+    } catch (err: any) {
+      setError(err.message)
+    }
   }
+
+  if (loading) return <div className="p-4">Cargando canchas...</div>
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Canchas</h1>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+          {error}
+        </div>
+      )}
       <div className="mb-4">
         <label className="mr-2">Proveedor de pago:</label>
         <select value={provider} onChange={e => setProvider(e.target.value)} className="border px-2">

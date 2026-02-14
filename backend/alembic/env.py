@@ -14,6 +14,9 @@ import models.players  # noqa: F401
 import models.matches  # noqa: F401
 import models.conversations  # noqa: F401
 import models.messages  # noqa: F401
+import models.teams  # noqa: F401
+import models.tournaments  # noqa: F401
+import models.users  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
